@@ -83,7 +83,7 @@ def infect(hyperlinks: [[int]], infected: set):
     return infected_nodes
 
 
-def get_networks(hyperlinks_by_timestamp: dict, nodes: list[int], infection_goal):
+def get_infected_nodes_by_timestamp(hyperlinks_by_timestamp: dict, nodes: list[int], infection_goal):
     infected_nodes_by_timestamp = {}
     infected_nodes_by_seed = {}
     for seed in nodes:
@@ -120,10 +120,34 @@ def get_all_nodes(hyperlinks_by_timestamp):
     return nodes
 
 
+def plot_infected_nodes_by_seed(sorted_infected_nodes, assignment_num):
+    seeds = list(sorted_infected_nodes.keys())
+    timestamps = list(sorted_infected_nodes.values())
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(seeds, timestamps, marker='o', color='b')
+    plt.xlabel('Seed Nodes')
+    plt.ylabel('Timestamp to Reach Goal')
+    plt.title('Timestamp for Nodes to Reach Goal for Each Seed')
+    num_ticks = 50
+    if len(seeds) > num_ticks:
+        step = 10
+        plt.xticks(seeds[::step], rotation=45, fontsize=8)
+    else:
+        plt.xticks(seeds, rotation=45, fontsize=5)
+
+    plt.tight_layout()
+    plt.savefig(f"b_{assignment_num}.png")
+    plt.show()
+
+
+
 if __name__ == "__main__":
     hyperlinks_by_timestamp = read_file()
     nodes = get_all_nodes(hyperlinks_by_timestamp)
     # WTF is not map??? @Anna
-    infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_networks(hyperlinks_by_timestamp, list(nodes), 0.8)
+    infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(hyperlinks_by_timestamp, list(nodes), 0.8)
 
     plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
+
+    plot_infected_nodes_by_seed(not_map, "9")
