@@ -120,6 +120,128 @@ def get_all_nodes(hyperlinks_by_timestamp):
     return nodes
 
 
+def calculate_nodes_by_degree(hyperlinks, nodes):
+    degrees = {node: 0 for node in nodes}
+    used_hyperlinks = set()
+    for hyperlink in hyperlinks:
+        if tuple(hyperlink) not in used_hyperlinks:
+            for node in hyperlink:
+                degrees[node] += 1
+            used_hyperlinks.add(tuple(sorted(hyperlink)))
+
+    sorted_grouped = {}
+    degrees = dict(sorted(degrees.items(), key=lambda item: item[1], reverse=True))
+    for node, degree in sorted(degrees.items()):
+        if degree in sorted_grouped:
+            sorted_grouped[degree].append(node)
+        else:
+            sorted_grouped[degree] = [node]
+    return dict(sorted(sorted_grouped.items(), key=lambda x: x[0], reverse=True))
+
+
+def calculate_nodes_by_weight(hyperlinks, nodes):
+    weight_by_hyperlink = {}
+    for hyperlink in hyperlinks:
+        if tuple(sorted(hyperlink)) in weight_by_hyperlink:
+            weight_by_hyperlink[tuple(sorted(hyperlink))] = weight_by_hyperlink[tuple(sorted(hyperlink))] + 1
+        else:
+            weight_by_hyperlink[tuple(sorted(hyperlink))] = 1
+
+    node_strength = {node: 0 for node in nodes}
+    for node in nodes:
+        for hyperlink, weight in weight_by_hyperlink.items():
+            if node in hyperlink:
+                node_strength[node] += weight
+    sorted_grouped = {}
+    degrees = dict(sorted(node_strength.items(), key=lambda item: item[1], reverse=True))
+    for node, strength in sorted(degrees.items()):
+        if strength in sorted_grouped:
+            sorted_grouped[strength].append(node)
+        else:
+            sorted_grouped[strength] = [node]
+    return dict(sorted(sorted_grouped.items(), key=lambda x: x[0], reverse=True))
+
+
+def calculate_nodes_by_first_contact_timestamp(hyperlinks_by_timestamp):
+    first_contact_timestamp_by_node = {}
+    for (timestamp, hyperlinks) in hyperlinks_by_timestamp.items():
+        for hyperlink in hyperlinks:
+            for node in hyperlink:
+                if node in first_contact_timestamp_by_node:
+                    first_contact_timestamp_by_node[node] = min(timestamp, first_contact_timestamp_by_node[node])
+                else:
+                    first_contact_timestamp_by_node[node] = timestamp
+    first_contact_timestamp_by_node = dict(sorted(first_contact_timestamp_by_node.items(), key=lambda item: item[1], reverse=True))
+    sorted_grouped = {}
+    for node, timestamp in sorted(first_contact_timestamp_by_node.items()):
+        if timestamp in sorted_grouped:
+            sorted_grouped[timestamp].append(node)
+        else:
+            sorted_grouped[timestamp] = [node]
+    return dict(sorted(sorted_grouped.items(), key=lambda x: x[0]))
+
+
+def centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, num):
+    f = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+    degrees = calculate_nodes_by_degree(hyperlinks, nodes)
+    weights = calculate_nodes_by_weight(hyperlinks, nodes)
+    fc = calculate_nodes_by_first_contact_timestamp(hyperlinks_by_timestamp)
+    rRD_values = []
+    rRS_values = []
+    rFS_values = []
+    for v in f:
+        rRD = 0
+        rRS = 0
+        rFS = 0
+        for _ in range(1000):
+            Rf_degree = set()
+            Rf_strength = set()
+            Rf = set()
+            Rf_contact = set()
+            degreess = list(degrees.items())[0:int(v * len(nodes))]
+            for key, value in degreess:
+                Rf_degree.add(random.choice(value))
+            weightss = list(weights.items())[0:int(v * len(nodes))]
+            for key, value in weightss:
+                Rf_strength.add(random.choice(value))
+            sorted_infected_nodess = list(sorted_infected_nodes.items())[0:int(v * len(nodes))]
+            for key, value in sorted_infected_nodess:
+                Rf.add(random.choice(value))
+            fcs = list(fc.items())[0:int(v * len(nodes))]
+            for key, value in fcs:
+                Rf_contact.add(random.choice(value))
+            rRD += len(Rf.intersection(Rf_degree)) / len(Rf)
+            rRS += len(Rf.intersection(Rf_strength)) / len(Rf)
+            rFS += len(Rf.intersection(Rf_contact)) / len(Rf)
+        rRD /= 1000
+        rRS /= 1000
+        rFS /= 1000
+        rRD_values.append(rRD)
+        rRS_values.append(rRS)
+        rFS_values.append(rFS)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(f, rRD_values, marker='o', label='rRD')
+    plt.plot(f, rRS_values, marker='s', label='rRS')
+    if num == "10":
+        plt.xlabel('Fraction according to nodes influence')
+        plt.ylabel('Recognition Rate')
+        plt.title('Recognition Rate for degree and strength vs fraction')
+        plt.xticks(f)
+        plt.legend()
+        plt.savefig('b_10.png')
+        plt.show()
+    else:
+        plt.plot(f, rFS_values, marker='^', label='r_first_contact')
+        plt.xlabel('Fraction according to nodes influence')
+        plt.ylabel('Recognition Rate')
+        plt.title('Recognition Rate for degree, strength and first contact vs fraction')
+        plt.xticks(f)
+        plt.legend()
+        plt.savefig('b_11.png')
+        plt.show()
+
+
 def plot_infected_nodes_by_seed(sorted_infected_nodes, assignment_num):
     seeds = list(sorted_infected_nodes.keys())
     timestamps = list(sorted_infected_nodes.values())
@@ -141,13 +263,18 @@ def plot_infected_nodes_by_seed(sorted_infected_nodes, assignment_num):
     plt.show()
 
 
-
 if __name__ == "__main__":
     hyperlinks_by_timestamp = read_file()
     nodes = get_all_nodes(hyperlinks_by_timestamp)
-    # WTF is not map??? @Anna
+    # WTF is not_map??? @Anna
     infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(hyperlinks_by_timestamp, list(nodes), 0.8)
 
-    plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
+    # plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
 
-    plot_infected_nodes_by_seed(not_map, "9")
+    # plot_infected_nodes_by_seed(not_map, "9")
+
+    hyperlinks = [inner for outer in hyperlinks_by_timestamp.values() for inner in outer]
+
+    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "10")
+
+    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
