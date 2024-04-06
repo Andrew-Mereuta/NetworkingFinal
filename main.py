@@ -6,6 +6,35 @@ file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
 theta = 0.3  # minimum percentage of infectious nodes to start infection
 
+def compute_importance_through_time(alpha=0.2):
+    """
+    This function computes the importance of nodes
+    based on their number of activations that ocurred
+    on their links and the time at which those activations
+    happened
+    """
+    graph_data_map = read_file()
+    activation_nodes = {}
+    weight_nodes = {}
+    for timestep in range(len(graph_data_map)):
+        ocurring_nodes = set()
+        for hyperlink in graph_data_map[timestep]: # inspect all hyperlinks at timestep t
+            for node in hyperlink:
+                ocurring_nodes.add(node) # record all ocurring nodes in the set of hyperlinks at timestep t for later computation of weight
+                if node not in weight_nodes:
+                    weight_nodes[node] = 0.0
+                if node not in activation_nodes:
+                    activation_nodes[node] = {}
+
+                if timestep not in activation_nodes[node]:
+                    activation_nodes[node][timestep] = []
+                
+                activation_nodes[node][timestep].append(len(hyperlink)-1) # add active links at that timestep, since each hyperlink is a clique, the num of links is num of nodes - 1
+        for node in ocurring_nodes:
+            active_nodes = sum(activation_nodes[node][timestep]) # sum up all the active edges of node at timestep t
+            weight_nodes[node] += (active_nodes/(timestep+1))**alpha
+
+    return weight_nodes
 
 def read_file():
     with open(file_name, "r") as file:
@@ -15,7 +44,6 @@ def read_file():
         parsed_data_map[i] = eval(line.strip())
 
     return parsed_data_map
-
 
 def will_infect():
     choices = [True, False]
