@@ -1,10 +1,59 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import math
 
 file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
 theta = 0.3  # minimum percentage of infectious nodes to start infection
+
+def compute_node_weight_by_node_popularity(base_weight = 1.1):
+    """
+        We create an importance metric where a node gains
+        weight whenever the following condition is met:
+        - A pair of nodes j,k is introduced by node i where node i 
+        already had a connection before with j and k but not j and k.
+            - The weight added weights more if the introduced nodes are
+            of higher weight
+
+        Note that whenever the two nodes j and k are "introduced" by i,
+        a new connection is formed between them, therefore there is no
+        need to keep track of introductions for later on since the original
+        condition is already not satisfied by this observation.
+    """
+    graph_data_map = read_file()
+    connection_information = {} # keep track of known nodes by every other node
+    weight_nodes = {}
+    for timestep in range(len(graph_data_map)):
+        ocurring_nodes = set()
+        for hyperlink in graph_data_map[timestep]: # inspect all hyperlinks at timestep t
+            for node in hyperlink:
+                if node not in connection_information:
+                    connection_information[node] = set()
+                if node not in weight_nodes:
+                    weight_nodes[node] = base_weight
+                other_nodes = list(filter(lambda x: x != node and x in connection_information[node],hyperlink))
+                added_pairs = set()
+                for node_1 in other_nodes:
+                    for node_2 in other_nodes:
+                        if node_1 != node_2 or (node_1,node_2) in \
+                            added_pairs or (node_2,node_1) in added_pairs: # skip if same node or pair already explored in reverse order
+                            continue
+                        added_pairs.add((node_1,node_2))
+                        if node_2 not in connection_information[node_1] and\
+                             node_1 not in connection_information[node_2]: # if nodes do not know eachother
+                            weight_node_1 = weight_nodes[node_1]
+                            weight_node_2 = weight_nodes[node_2]
+                            weight_nodes[node] += math.log(weight_node_1) + math.log(weight_node_2)
+
+                            # make sure node_1 and node_2 now "know" eachother
+            for node in hyperlink:
+                for node_1 in hyperlink:
+                    if node_1 != node:
+                        connection_information[node].add(node_1)
+                        connection_information[node_1].add(node)
+    return weight_nodes
+            
 
 def compute_importance_through_time(alpha=0.2):
     """
