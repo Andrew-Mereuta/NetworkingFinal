@@ -6,10 +6,11 @@ file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
 theta = 0.3  # minimum percentage of infectious nodes to start infection
 
+
 def compute_importance_through_time(alpha=0.2):
     """
     This function computes the importance of nodes
-    based on their number of activations that ocurred
+    based on their number of activations that occurred
     on their links and the time at which those activations
     happened
     """
@@ -17,10 +18,12 @@ def compute_importance_through_time(alpha=0.2):
     activation_nodes = {}
     weight_nodes = {}
     for timestep in range(len(graph_data_map)):
-        ocurring_nodes = set()
-        for hyperlink in graph_data_map[timestep]: # inspect all hyperlinks at timestep t
+        occurring_nodes = set()
+        # inspect all hyperlinks at timestep t
+        for hyperlink in graph_data_map[timestep]:
             for node in hyperlink:
-                ocurring_nodes.add(node) # record all ocurring nodes in the set of hyperlinks at timestep t for later computation of weight
+                # record all occurring nodes in the set of hyperlinks at timestep t for later computation of weight
+                occurring_nodes.add(node)
                 if node not in weight_nodes:
                     weight_nodes[node] = 0.0
                 if node not in activation_nodes:
@@ -28,13 +31,15 @@ def compute_importance_through_time(alpha=0.2):
 
                 if timestep not in activation_nodes[node]:
                     activation_nodes[node][timestep] = []
-                
-                activation_nodes[node][timestep].append(len(hyperlink)-1) # add active links at that timestep, since each hyperlink is a clique, the num of links is num of nodes - 1
-        for node in ocurring_nodes:
-            active_nodes = sum(activation_nodes[node][timestep]) # sum up all the active edges of node at timestep t
-            weight_nodes[node] += (active_nodes/(timestep+1))**alpha
+
+                # add active links at that timestep, since each hyperlink is a clique, the num of links is num of nodes - 1
+                activation_nodes[node][timestep].append(len(hyperlink) - 1)
+        for node in occurring_nodes:
+            active_nodes = sum(activation_nodes[node][timestep])  # sum up all the active edges of node at timestep t
+            weight_nodes[node] += (active_nodes / (timestep + 1)) ** alpha
 
     return weight_nodes
+
 
 def read_file():
     with open(file_name, "r") as file:
@@ -44,6 +49,7 @@ def read_file():
         parsed_data_map[i] = eval(line.strip())
 
     return parsed_data_map
+
 
 def will_infect():
     choices = [True, False]
@@ -199,7 +205,8 @@ def calculate_nodes_by_first_contact_timestamp(hyperlinks_by_timestamp):
                     first_contact_timestamp_by_node[node] = min(timestamp, first_contact_timestamp_by_node[node])
                 else:
                     first_contact_timestamp_by_node[node] = timestamp
-    first_contact_timestamp_by_node = dict(sorted(first_contact_timestamp_by_node.items(), key=lambda item: item[1], reverse=True))
+    first_contact_timestamp_by_node = dict(
+        sorted(first_contact_timestamp_by_node.items(), key=lambda item: item[1], reverse=True))
     sorted_grouped = {}
     for node, timestamp in sorted(first_contact_timestamp_by_node.items()):
         if timestamp in sorted_grouped:
@@ -399,7 +406,8 @@ if __name__ == "__main__":
     hyperlinks_by_timestamp = read_file()
     nodes = get_all_nodes(hyperlinks_by_timestamp)
     # WTF is not_map??? @Anna
-    infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(hyperlinks_by_timestamp, list(nodes), 0.8)
+    infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(
+        hyperlinks_by_timestamp, list(nodes), 0.8)
 
     # plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
 
@@ -411,7 +419,8 @@ if __name__ == "__main__":
 
     # centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
 
-    infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(hyperlinks_by_timestamp, list(nodes), 0.1)
+    infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(
+        hyperlinks_by_timestamp, list(nodes), 0.1)
     sorted_infected_nodes_r_accent = get_networksb12(hyperlinks_by_timestamp, nodes, 0.8)
     b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1')
     b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2')
