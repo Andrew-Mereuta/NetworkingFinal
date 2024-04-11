@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import math
@@ -66,6 +67,7 @@ def compute_importance_through_time(alpha=0.2):
     graph_data_map = read_file()
     activation_nodes = {}
     weight_nodes = {}
+    importance_list = []  # List to store importance scores of specific nodes
     for timestep in range(len(graph_data_map)):
         occurring_nodes = set()
         # inspect all hyperlinks at timestep t
@@ -86,8 +88,37 @@ def compute_importance_through_time(alpha=0.2):
         for node in occurring_nodes:
             active_nodes = sum(activation_nodes[node][timestep])  # sum up all the active edges of node at timestep t
             weight_nodes[node] += (active_nodes / (timestep + 1)) ** alpha
+            if node in [50, 49, 0, 1, 194]:  # Check if node is in the specific nodes list
+                importance_list.append(weight_nodes[node])  # Append importance score to the list
 
-    return weight_nodes
+    # Print top-k most important nodes
+    k = 10
+    sorted_nodes = sorted(weight_nodes.items(), key=lambda x: x[1], reverse=True)
+    print(f"Top-{k} most important nodes:")
+    for i in range(k):
+        print(f"Node: {sorted_nodes[i][0]}, Importance: {sorted_nodes[i][1]}")
+
+    # Plot importance of specific nodes over time
+    specific_nodes = [50, 49, 0, 1, 194]
+    plt.figure(figsize=(10, 6))
+    for node in specific_nodes:
+        importance_over_time = []
+        cumulative_importance = 0  # Initialize cumulative importance
+        for timestep in range(len(graph_data_map)):
+            if timestep in activation_nodes[node]:
+                active_nodes = sum(activation_nodes[node][timestep])
+                cumulative_importance += (active_nodes / (timestep + 1)) ** alpha  # Update cumulative importance
+            importance_over_time.append(cumulative_importance)  # Append cumulative importance to the list
+        plt.plot(range(len(graph_data_map)), importance_over_time, label=f"Node {node}")
+    plt.xlabel('Timestep')
+    plt.ylabel('Importance')
+    plt.title('Importance of top-5 Nodes Over Time')
+    plt.legend()
+    plt.savefig('importance_over_time_new.png')
+    plt.show()
+
+    return weight_nodes, importance_list
+
 
 
 def read_file():
@@ -473,3 +504,4 @@ if __name__ == "__main__":
     b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1', nodes)
     b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2', nodes)
     b12(sorted_infected_nodes_r_star, sorted_infected_nodes, sorted_infected_nodes_r_accent, '3', nodes)
+    compute_importance_through_time()
