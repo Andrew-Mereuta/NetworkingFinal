@@ -4,6 +4,7 @@ import random
 
 file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
+# TODO: theta is integer number representing the number of nodes that must be infected to start infection of hyperlink
 theta = 0.3  # minimum percentage of infectious nodes to start infection
 
 
@@ -158,9 +159,9 @@ def calculate_nodes_by_degree(hyperlinks, nodes):
     degrees = {node: 0 for node in nodes}
     used_hyperlinks = set()
     for hyperlink in hyperlinks:
-        if tuple(hyperlink) not in used_hyperlinks:
+        if tuple(sorted(hyperlink)) not in used_hyperlinks:
             for node in hyperlink:
-                degrees[node] += 1
+                degrees[node] += (len(hyperlink) - 1)
             used_hyperlinks.add(tuple(sorted(hyperlink)))
 
     sorted_grouped = {}
@@ -177,7 +178,7 @@ def calculate_nodes_by_weight(hyperlinks, nodes):
     weight_by_hyperlink = {}
     for hyperlink in hyperlinks:
         if tuple(sorted(hyperlink)) in weight_by_hyperlink:
-            weight_by_hyperlink[tuple(sorted(hyperlink))] = weight_by_hyperlink[tuple(sorted(hyperlink))] + 1
+            weight_by_hyperlink[tuple(sorted(hyperlink))] += (len(hyperlink) - 1)
         else:
             weight_by_hyperlink[tuple(sorted(hyperlink))] = 1
 
@@ -409,15 +410,15 @@ if __name__ == "__main__":
     infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(
         hyperlinks_by_timestamp, list(nodes), 0.8)
 
-    # plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
+    plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
 
-    # plot_infected_nodes_by_seed(not_map, "9")
+    plot_infected_nodes_by_seed(not_map, "9")
 
     hyperlinks = [inner for outer in hyperlinks_by_timestamp.values() for inner in outer]
 
-    # centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "10")
+    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "10")
 
-    # centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
+    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
 
     infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(
         hyperlinks_by_timestamp, list(nodes), 0.1)
