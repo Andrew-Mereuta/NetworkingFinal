@@ -4,8 +4,7 @@ import random
 
 file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
-# TODO: theta is integer number representing the number of nodes that must be infected to start infection of hyperlink
-theta = 0.3  # minimum percentage of infectious nodes to start infection
+theta = 1  # minimum number of infectious nodes to start infection
 
 
 def compute_importance_through_time(alpha=0.2):
@@ -107,9 +106,8 @@ def infect(hyperlinks: [[int]], infected: set):
 
     for hyperlink in hyperlinks:
         infected_in_hyperlink = len(set(hyperlink).intersection(infected))
-        infected_percentage = infected_in_hyperlink / (len(hyperlink))
 
-        if infected_percentage >= theta:
+        if infected_in_hyperlink >= theta:
             for node in hyperlink:
                 if node not in infected:
                     if will_infect():
