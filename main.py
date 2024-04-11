@@ -337,7 +337,7 @@ def get_networksb12(hyperlinks_by_timestamp: dict, nodes: list[int], infection_g
     return dict(sorted(sorted_grouped.items(), key=lambda x: x[0]))
 
 
-def b12(sorted_infected_nodes_r, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, num):
+def b12(sorted_infected_nodes_r, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, num, nodes):
     f = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
     rRD_values = []
     rRS_values = []
@@ -421,6 +421,6 @@ if __name__ == "__main__":
     infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(
         hyperlinks_by_timestamp, list(nodes), 0.1)
     sorted_infected_nodes_r_accent = get_networksb12(hyperlinks_by_timestamp, nodes, 0.8)
-    b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1')
-    b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2')
-    b12(sorted_infected_nodes_r_star, sorted_infected_nodes, sorted_infected_nodes_r_accent, '3')
+    b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1', nodes)
+    b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2', nodes)
+    b12(sorted_infected_nodes_r_star, sorted_infected_nodes, sorted_infected_nodes_r_accent, '3', nodes)
