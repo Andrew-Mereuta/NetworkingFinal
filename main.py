@@ -7,6 +7,27 @@ file_name = "data/infectious_hypergraph.dat"
 beta = 0.6  # probability to infect
 theta = 0.3  # minimum percentage of infectious nodes to start infection
 
+def plot_multiple_xy(x_values_list, y_values_list, colors_list, labels_list=None):
+    # Plot multiple sets of x vs y with different colors
+    plt.figure(figsize=(10, 7))  # Optional: Set the figure size
+
+    for i in range(len(x_values_list)):
+        x_values = x_values_list[i]
+        y_values = y_values_list[i]
+        color = colors_list[i]
+
+        # Plot each set of x vs y with specified color
+        plt.plot(x_values, y_values, linestyle='-', color=color,
+                 label=labels_list[i] if labels_list else None)
+
+    plt.title('Connection weighted importance')
+    plt.xlabel('timestep')
+    plt.ylabel('weight')
+    plt.grid(True)  # Optional: Turn on the grid
+    if labels_list:
+        plt.legend()  # Show legend if labels are provided
+    plt.show()
+
 def compute_node_weight_by_node_popularity(base_weight = 1.1):
     """
         We create an importance metric where a node gains
@@ -24,7 +45,15 @@ def compute_node_weight_by_node_popularity(base_weight = 1.1):
     graph_data_map = read_file()
     connection_information = {} # keep track of known nodes by every other node
     weight_nodes = {}
+    specific_nodes = [191, 192, 190, 70, 194]
+    timesteps = {node: [] for node in specific_nodes}
+    scores = {node: [] for node in specific_nodes}
+    collaboration_frequencies = {}
     for timestep in range(len(graph_data_map)):
+        for node in specific_nodes:
+            timesteps[node].append(timestep)
+            scores[node].append(weight_nodes[node] if node in weight_nodes else 0.0)
+            
         ocurring_nodes = set()
         for hyperlink in graph_data_map[timestep]: # inspect all hyperlinks at timestep t
             for node in hyperlink:
@@ -32,6 +61,9 @@ def compute_node_weight_by_node_popularity(base_weight = 1.1):
                     connection_information[node] = set()
                 if node not in weight_nodes:
                     weight_nodes[node] = base_weight
+                if node not in collaboration_frequencies:
+                    collaboration_frequencies[node] = 0
+
                 other_nodes = list(filter(lambda x: x != node and x in connection_information[node],hyperlink))
                 added_pairs = set()
                 for node_1 in other_nodes:
@@ -44,7 +76,10 @@ def compute_node_weight_by_node_popularity(base_weight = 1.1):
                              node_1 not in connection_information[node_2]: # if nodes do not know eachother
                             weight_node_1 = weight_nodes[node_1]
                             weight_node_2 = weight_nodes[node_2]
+                            collaboration_frequencies[node] += 1
                             weight_nodes[node] += math.log(weight_node_1) + math.log(weight_node_2)
+                            if node in specific_nodes:
+                                scores[node][-1] = weight_nodes[node]
 
                             # make sure node_1 and node_2 now "know" eachother
             for node in hyperlink:
@@ -52,6 +87,19 @@ def compute_node_weight_by_node_popularity(base_weight = 1.1):
                     if node_1 != node:
                         connection_information[node].add(node_1)
                         connection_information[node_1].add(node)
+
+    x_values_list = [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]
+    y_values_list = [[2, 3, 5, 7, 11], [1, 4, 9, 16, 25], [0, 1, 0, 1, 0], [3, 2, 1, 0, -1], [10, 8, 6, 4, 2]]
+    colors_list = ['red', 'blue', 'green', 'orange', 'purple']
+    labels_list = ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5']
+
+    keys = [key for key in scores]
+
+    plot_multiple_xy([timesteps[key] for key in keys], [scores[key] for key in keys], colors_list, keys)
+    collab_top = list(sorted(collaboration_frequencies.items(),key=lambda x: x[1]))[-10:]
+    collab_min = list(filter(lambda x: x[1] != 0,list(sorted(collaboration_frequencies.items(),key=lambda x: x[1]))))[:10]
+    print(collab_top)
+    print(collab_min)
     return weight_nodes
             
 
