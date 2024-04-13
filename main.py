@@ -8,7 +8,7 @@ beta = 0.6  # probability to infect
 theta = 1  # minimum number of infectious nodes to start infection
 
 
-def compute_node_weight_by_node_popularity(base_weight = 1.1):
+def compute_node_weight_by_node_popularity(base_weight=1.1):
     """
         We create an importance metric where a node gains
         weight whenever the following condition is met:
@@ -23,38 +23,37 @@ def compute_node_weight_by_node_popularity(base_weight = 1.1):
         condition is already not satisfied by this observation.
     """
     graph_data_map = read_file()
-    connection_information = {} # keep track of known nodes by every other node
+    connection_information = {}  # keep track of known nodes by every other node
     weight_nodes = {}
     for timestep in range(len(graph_data_map)):
-        ocurring_nodes = set()
-        for hyperlink in graph_data_map[timestep]: # inspect all hyperlinks at timestep t
+        for hyperlink in graph_data_map[timestep]:  # inspect all hyperlinks at timestep t
             for node in hyperlink:
                 if node not in connection_information:
                     connection_information[node] = set()
                 if node not in weight_nodes:
                     weight_nodes[node] = base_weight
-                other_nodes = list(filter(lambda x: x != node and x in connection_information[node],hyperlink))
+                other_nodes = list(filter(lambda x: x != node and x in connection_information[node], hyperlink))
                 added_pairs = set()
                 for node_1 in other_nodes:
                     for node_2 in other_nodes:
-                        if node_1 != node_2 or (node_1,node_2) in \
-                            added_pairs or (node_2,node_1) in added_pairs: # skip if same node or pair already explored in reverse order
+                        if node_1 != node_2 or (node_1, node_2) in \
+                                added_pairs or (node_2, node_1) in added_pairs:
+                            # skip if same node or pair already explored in reverse order
                             continue
-                        added_pairs.add((node_1,node_2))
-                        if node_2 not in connection_information[node_1] and\
-                             node_1 not in connection_information[node_2]: # if nodes do not know eachother
+                        added_pairs.add((node_1, node_2))
+                        if node_2 not in connection_information[node_1] and \
+                                node_1 not in connection_information[node_2]:  # if nodes do not know each other
                             weight_node_1 = weight_nodes[node_1]
                             weight_node_2 = weight_nodes[node_2]
                             weight_nodes[node] += math.log(weight_node_1) + math.log(weight_node_2)
-
-                            # make sure node_1 and node_2 now "know" eachother
+                            # make sure node_1 and node_2 now "know" each other
             for node in hyperlink:
                 for node_1 in hyperlink:
                     if node_1 != node:
                         connection_information[node].add(node_1)
                         connection_information[node_1].add(node)
     return weight_nodes
-            
+
 
 def compute_importance_through_time(alpha=0.2):
     """
@@ -326,6 +325,7 @@ def centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp
 
 
 def plot_infected_nodes_by_seed(sorted_infected_nodes, assignment_num):
+    sorted_infected_nodes = dict(sorted(sorted_infected_nodes.items()))
     seeds = list(sorted_infected_nodes.keys())
     timestamps = list(sorted_infected_nodes.values())
 
@@ -334,14 +334,6 @@ def plot_infected_nodes_by_seed(sorted_infected_nodes, assignment_num):
     plt.xlabel('Seed Nodes')
     plt.ylabel('Timestamp to Reach Goal')
     plt.title('Timestamp for Nodes to Reach Goal for Each Seed')
-    num_ticks = 50
-    if len(seeds) > num_ticks:
-        step = 10
-        plt.xticks(seeds[::step], rotation=45, fontsize=8)
-    else:
-        plt.xticks(seeds, rotation=45, fontsize=5)
-
-    plt.tight_layout()
     plt.savefig(f"b_{assignment_num}.png")
     plt.show()
 
@@ -450,6 +442,22 @@ def b12(sorted_infected_nodes_r, sorted_infected_nodes_r_star, sorted_infected_n
         plt.show()
 
 
+def plot_weight_by_node(weight_by_node):
+    # Extracting nodes and weights
+    nodes = list(weight_by_node.keys())
+    weights = list(weight_by_node.values())
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(nodes, weights, color='b', linestyle='-')
+    plt.xlabel('Node')
+    plt.ylabel('Weight')
+    plt.title('Weight by Node')
+    plt.savefig('b_adrian.png')
+    plt.show()
+
+
+
 if __name__ == "__main__":
     hyperlinks_by_timestamp = read_file()
     nodes = get_all_nodes(hyperlinks_by_timestamp)
@@ -457,19 +465,21 @@ if __name__ == "__main__":
     infected_nodes_by_timestamp, sorted_infected_nodes, not_map = get_infected_nodes_by_timestamp(
         hyperlinks_by_timestamp, list(nodes), 0.8)
 
-    plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
+    # plot_average_infected_with_error_bars(infected_nodes_by_timestamp)
 
     plot_infected_nodes_by_seed(not_map, "9")
 
-    hyperlinks = [inner for outer in hyperlinks_by_timestamp.values() for inner in outer]
-
-    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "10")
-
-    centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
-
-    infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(
-        hyperlinks_by_timestamp, list(nodes), 0.1)
-    sorted_infected_nodes_r_accent = get_networksb12(hyperlinks_by_timestamp, list(nodes), 0.8)
-    b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1', nodes)
-    b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2', nodes)
-    b12(sorted_infected_nodes_r_star, sorted_infected_nodes, sorted_infected_nodes_r_accent, '3', nodes)
+    # hyperlinks = [inner for outer in hyperlinks_by_timestamp.values() for inner in outer]
+    #
+    # centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "10")
+    #
+    # centrality(nodes, hyperlinks, sorted_infected_nodes, hyperlinks_by_timestamp, "11")
+    #
+    # infected_nodes_by_timestamp_r_star, sorted_infected_nodes_r_star, not_map_r_star = get_infected_nodes_by_timestamp(
+    #     hyperlinks_by_timestamp, list(nodes), 0.1)
+    # sorted_infected_nodes_r_accent = get_networksb12(hyperlinks_by_timestamp, list(nodes), 0.8)
+    # b12(sorted_infected_nodes, sorted_infected_nodes_r_star, sorted_infected_nodes_r_accent, '1', nodes)
+    # b12(sorted_infected_nodes_r_accent, sorted_infected_nodes, sorted_infected_nodes_r_star, '2', nodes)
+    # b12(sorted_infected_nodes_r_star, sorted_infected_nodes, sorted_infected_nodes_r_accent, '3', nodes)
+    #
+    # plot_weight_by_node(compute_importance_through_time())
