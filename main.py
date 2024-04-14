@@ -86,7 +86,7 @@ def compute_importance_through_time(alpha=0.2):
             active_nodes = sum(activation_nodes[node][timestep])  # sum up all the active edges of node at timestep t
             weight_nodes[node] += (active_nodes / (timestep + 1)) ** alpha
 
-    return weight_nodes
+    return dict(sorted(weight_nodes.items(),key = lambda x: x[1],reverse=True))
 
 
 def read_file():
